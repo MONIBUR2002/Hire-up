@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,32 +25,46 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moniapps.hireup.R
+import com.moniapps.hireup.screens.authentication.viewmodels.SignUpViewModel
 import com.moniapps.hireup.ui.theme.AppTheme
 import com.moniapps.hireup.ui.theme.OceanPurple
 import com.moniapps.hireup.ui.theme.SalmonPink
 
 @Composable
-fun SignUpScreen(modifier: Modifier = Modifier) {
-    var showPassword by remember { mutableStateOf(false) }
-    var checked by remember { mutableStateOf(false) }
+fun SignUpScreen(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
+    val email by viewModel.emailText.collectAsState()
+    val password by viewModel.passwordText.collectAsState()
+    val confirmPassword by viewModel.confirmPasswordText.collectAsState()
+    val checked by viewModel.checked.collectAsState()
+    val showPassword by viewModel.showPassword.collectAsState()
+
+    val focusManager = LocalFocusManager.current
+    val passwordFocusRequester = remember { FocusRequester() }
+    val confirmPasswordFocusRequester = remember { FocusRequester() }
+
     val systemTheme = isSystemInDarkTheme()
     Box(
         modifier = modifier
@@ -81,37 +97,78 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                 color = AppTheme.colorScheme.secondary.copy(alpha = .6f),
                 fontWeight = FontWeight.Normal
             )
-            Spacer(modifier = modifier.height(60.dp))
+            Spacer(modifier = modifier.height(40.dp))
+            // Email TextField
             OutlinedTextField(
                 shape = RoundedCornerShape(10.dp),
-                value = "",
-                onValueChange = {},
+                value = email,
+                onValueChange = {
+                    viewModel.email(it)
+                },
                 label = { Text(text = "Enter your email", fontSize = 16.sp) },
+                maxLines = 1,
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = AppTheme.colorScheme.secondary,
+                    unfocusedTextColor = AppTheme.colorScheme.secondary,
+                    focusedContainerColor = AppTheme.colorScheme.background,
+                    unfocusedContainerColor = AppTheme.colorScheme.background,
+                ),
+                keyboardActions = KeyboardActions(onNext = {
+                    passwordFocusRequester.requestFocus()
+                }),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next,
+                    keyboardType = KeyboardType.Email
+                ),
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             )
             Spacer(modifier = modifier.height(28.dp))
+            // Password TextField
             OutlinedTextField(
                 shape = RoundedCornerShape(10.dp),
-                value = "",
-                onValueChange = {},
+                value = password,
+                onValueChange = {
+                    viewModel.password(it)
+                },
                 label = { Text(text = "Password", fontSize = 16.sp) },
+                maxLines = 1,
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = AppTheme.colorScheme.secondary,
+                    unfocusedTextColor = AppTheme.colorScheme.secondary,
+                    focusedContainerColor = AppTheme.colorScheme.background,
+                    unfocusedContainerColor = AppTheme.colorScheme.background,
+                ),
+                keyboardActions = KeyboardActions(onNext = {
+                    confirmPasswordFocusRequester.requestFocus()
+                }),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next,
+                    keyboardType = KeyboardType.Password
+                ),
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
+                    .focusRequester(passwordFocusRequester)
             )
             Spacer(modifier = modifier.height(28.dp))
+            // Confirm Password TextField
             OutlinedTextField(
                 shape = RoundedCornerShape(10.dp),
-                value = "",
-                onValueChange = {},
+                value = confirmPassword,
+                onValueChange = {
+                    viewModel.confirmPassword(it)
+                },
                 label = { Text(text = "Conform Password", fontSize = 16.sp) },
                 trailingIcon = {
+                    // Icon to show password
                     IconButton(
-                        modifier = modifier.padding(end = 8.dp), onClick = {
-                            showPassword = !showPassword
-                        }) {
+                        modifier = modifier.padding(end = 8.dp),
+                        onClick = {
+                            viewModel.showPassword(showPassword)
+                        }
+                    ) {
                         Icon(
                             modifier = modifier.size(25.dp),
                             painter = painterResource(
@@ -122,9 +179,25 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                         )
                     }
                 },
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = AppTheme.colorScheme.secondary,
+                    unfocusedTextColor = AppTheme.colorScheme.secondary,
+                    focusedContainerColor = AppTheme.colorScheme.background,
+                    unfocusedContainerColor = AppTheme.colorScheme.background,
+
+                    ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = {
+                    focusManager.clearFocus()
+                }
+                ),
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
+                    .focusRequester(focusRequester = confirmPasswordFocusRequester)
             )
             Spacer(modifier = modifier.height(20.dp))
 
@@ -134,22 +207,22 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .padding(start = 5.dp, end = 16.dp)
             ) {
+                // Remember Me checkbox
                 Checkbox(
                     checked = checked,
                     onCheckedChange = {
-                        checked = !checked
-                    },
-
-                    )
+                        viewModel.checked(it)
+                    }
+                )
                 Text(
                     text = "Remember me",
                     fontSize = 16.sp,
                     color = AppTheme.colorScheme.secondary.copy(alpha = .6f)
                 )
                 Spacer(modifier = modifier.weight(1f))
-
             }
             Spacer(modifier = modifier.height(40.dp))
+            // Sign Up Button
             Button(
                 onClick = {
 
@@ -206,7 +279,6 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center
                 )
-
                 Canvas(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -230,6 +302,7 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                 }
             }
             Spacer(modifier = modifier.height(60.dp))
+            // Sign Up with Google
             Card(
                 modifier = modifier
                     .fillMaxWidth()
@@ -266,6 +339,7 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                     text = "Already have an account?",
                     color = AppTheme.colorScheme.secondary
                 )
+                // Sign Up Button
                 Text(fontSize = 18.sp, text = " Sign up", color = OceanPurple)
             }
         }
@@ -275,5 +349,5 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun SignUpPreview() {
-    SignUpScreen()
+    SignUpScreen(viewModel = SignUpViewModel())
 }

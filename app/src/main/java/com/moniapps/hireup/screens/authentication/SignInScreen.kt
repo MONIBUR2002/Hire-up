@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,7 +25,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,27 +35,40 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moniapps.hireup.R
+import com.moniapps.hireup.screens.authentication.viewmodels.SignInViewModel
 import com.moniapps.hireup.ui.theme.AppTheme
-import com.moniapps.hireup.ui.theme.LightBlue
 import com.moniapps.hireup.ui.theme.OceanPurple
 import com.moniapps.hireup.ui.theme.SalmonPink
 
 
 @Composable
-fun SignInScreen(modifier: Modifier = Modifier) {
+fun SignInScreen(modifier: Modifier = Modifier, viewModel: SignInViewModel) {
+    val email by viewModel.emailText.collectAsState()
+    val password by viewModel.passwordText.collectAsState()
+
+
+    val passwordFocusRequester = remember { FocusRequester() }
+
     var showPassword by remember { mutableStateOf(false) }
     var checked by remember { mutableStateOf(false) }
     val systemTheme = isSystemInDarkTheme()
+
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -84,20 +101,47 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.Normal
             )
             Spacer(modifier = modifier.height(60.dp))
+            // Email TextField
             OutlinedTextField(
                 shape = RoundedCornerShape(10.dp),
-                value = "",
-                onValueChange = {},
+                value = email,
+                onValueChange = {
+                    viewModel.setEmail(it)
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = AppTheme.colorScheme.secondary,
+                    unfocusedTextColor = AppTheme.colorScheme.secondary,
+                    focusedContainerColor = AppTheme.colorScheme.background,
+                    unfocusedContainerColor = AppTheme.colorScheme.background,
+                    cursorColor = AppTheme.colorScheme.secondary,
+                ),
                 label = { Text(text = "Enter your email", fontSize = 16.sp) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = {
+                    passwordFocusRequester.requestFocus()
+                }),
+                maxLines = 1,
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
+
             )
             Spacer(modifier = modifier.height(28.dp))
+            // Password TextField
             OutlinedTextField(
                 shape = RoundedCornerShape(10.dp),
-                value = "",
-                onValueChange = {},
+                value = password,
+                onValueChange = {
+                    viewModel.setPassword(it)
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = AppTheme.colorScheme.secondary,
+                    unfocusedTextColor = AppTheme.colorScheme.secondary,
+                    focusedContainerColor = AppTheme.colorScheme.background,
+                    unfocusedContainerColor = AppTheme.colorScheme.background,
+                    cursorColor = AppTheme.colorScheme.secondary,
+                ),
+
                 label = { Text(text = "Password", fontSize = 16.sp) },
                 trailingIcon = {
                     IconButton(
@@ -117,6 +161,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
+                    .focusRequester(passwordFocusRequester)
             )
             Spacer(modifier = modifier.height(20.dp))
 
@@ -126,6 +171,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .padding(start = 5.dp, end = 16.dp)
             ) {
+                // Remember Me checkbox
                 Checkbox(
                     checked = checked,
                     onCheckedChange = {
@@ -146,6 +192,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                 )
             }
             Spacer(modifier = modifier.height(40.dp))
+            // Sign In Button
             Button(
                 onClick = {
 
@@ -226,6 +273,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                 }
             }
             Spacer(modifier = modifier.height(60.dp))
+            // Sign in with Google
             Card(
                 modifier = modifier
                     .fillMaxWidth()
@@ -235,7 +283,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                 colors = CardDefaults.cardColors(
                     containerColor = SalmonPink.copy(alpha = .1f)
                 ),
-                border = BorderStroke(width = 1.dp /2, color = AppTheme.colorScheme.secondary)
+                border = BorderStroke(width = 1.dp / 2, color = AppTheme.colorScheme.secondary)
             ) {
                 Row(
                     modifier = modifier.fillMaxSize(),
@@ -262,6 +310,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                     text = "Don't have an account?",
                     color = AppTheme.colorScheme.secondary
                 )
+                // Register new account
                 Text(fontSize = 18.sp, text = " Register", color = OceanPurple)
             }
         }
@@ -271,5 +320,5 @@ fun SignInScreen(modifier: Modifier = Modifier) {
 @Preview(showSystemUi = true)
 @Composable
 private fun SignInScreenPreview() {
-    SignInScreen()
+    SignInScreen(viewModel = SignInViewModel())
 }
